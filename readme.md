@@ -10,6 +10,8 @@ npm install --save worktank-esbuild-plugin
 
 ## Usage
 
+For more information read [this](https://github.com/fabiospampinato/worktank-loader).
+
 ```ts
 import esbuild from 'esbuild';
 import worktank from 'worktank-esbuild-plugin';
