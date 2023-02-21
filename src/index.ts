@@ -1,20 +1,22 @@
 
 /* IMPORT */
 
-import type {Options} from 'worktank/dist/types';
 import esbuild from 'esbuild';
 import findUpJson from 'find-up-json';
 import fs from 'node:fs';
 import path from 'node:path';
+import type {Plugin} from 'esbuild';
+import type {Options} from 'worktank/dist/types';
 
 /* HELPERS */
 
-const getBundle = ( filePath: string ): esbuild.BuildResult => {
+const getBundle = ( filePath: string, plugins: Plugin[] ): esbuild.BuildResult => {
 
   return esbuild.buildSync ({
     absWorkingDir: path.dirname ( filePath ),
     entryPoints: [filePath],
     tsconfig: findUpJson ( 'tsconfig.json' )?.path,
+    plugins,
     format: 'esm',
     platform: 'node',
     target: 'es2018',
@@ -90,7 +92,7 @@ const getWorkerFrontendModule = ( options: Options, methods: [string, string][] 
 
 /* MAIN */
 
-const plugin = ({ filter }: { filter: RegExp }): esbuild.Plugin => {
+const plugin = ({ filter, plugins }: { filter: RegExp, plugins?: Plugin[] }): esbuild.Plugin => {
 
   return {
     name: 'worktank',
@@ -98,7 +100,7 @@ const plugin = ({ filter }: { filter: RegExp }): esbuild.Plugin => {
 
       build.onLoad ( { filter }, async args => {
 
-        const contents = await transform ( args.path );
+        const contents = await transform ( args.path, plugins );
         const loader = path.extname ( args.path ).slice ( 1 ) as 'js' | 'ts';
 
         return { contents, loader };
@@ -110,11 +112,11 @@ const plugin = ({ filter }: { filter: RegExp }): esbuild.Plugin => {
 
 };
 
-const transform = async ( filePath: string ): Promise<string> => {
+const transform = async ( filePath: string, plugins: Plugin[] = [] ): Promise<string> => {
 
   const source = await fs.promises.readFile ( filePath, 'utf8' );
 
-  const bundle = getBundle ( filePath );
+  const bundle = getBundle ( filePath, plugins );
 
   if ( !bundle.outputFiles || bundle.outputFiles.length < 1 ) throw new Error ( `WorkTank Loader: unsupported worker file "${filePath}", bundling failed` );
 
