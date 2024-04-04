@@ -20,8 +20,8 @@
     "plugin"
   ],
   "dependencies": {
-    "find-up-json": "^2.0.2",
-    "worktank": "^2.3.1"
+    "find-up-json": "^2.0.4",
+    "worktank": "^2.6.1"
   },
   "peerDependencies": {
     "esbuild": "*"

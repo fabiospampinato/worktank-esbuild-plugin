@@ -6,7 +6,7 @@ import findUpJson from 'find-up-json';
 import fs from 'node:fs';
 import path from 'node:path';
 import type {Plugin} from 'esbuild';
-import type {Options} from 'worktank/dist/types';
+import type {Options} from 'worktank';
 
 /* HELPERS */
 
