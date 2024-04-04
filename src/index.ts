@@ -53,7 +53,7 @@ const getWorkerMethods = ( dist: string ): [string, string][] => {
 
 };
 
-const getWorkerOptions = ( filePath: string, dist: string, source: string, methods: [string, string][] ): Options => {
+const getWorkerOptions = ( filePath: string, dist: string, source: string, methods: [string, string][] ): Options<{}> => {
 
   const workerBackendModule = getWorkerBackendModule ( dist, methods );
   const name = source.match ( /\/\/.*?WORKTANK_NAME.*?=.*?(\S+)/ )?.[1] || path.basename ( filePath );
@@ -79,7 +79,7 @@ const getWorkerBackendModule = ( dist: string, methods: [string, string][] ): st
 
 };
 
-const getWorkerFrontendModule = ( options: Options, methods: [string, string][] ): string => {
+const getWorkerFrontendModule = ( options: Options<{}>, methods: [string, string][] ): string => {
 
   return [
     `import Pool from 'worktank';`, // Importing WorkTank
