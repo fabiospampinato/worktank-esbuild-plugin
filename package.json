@@ -2,6 +2,7 @@
   "name": "worktank-esbuild-plugin",
   "repository": "github:fabiospampinato/worktank-esbuild-plugin",
   "description": "Esbuild plugin for WorkTank which enables you to execute whole files in a worker pool, transparently.",
+  "license": "MIT",
   "version": "1.1.2",
   "type": "module",
   "main": "dist/index.js",
@@ -20,16 +21,16 @@
     "plugin"
   ],
   "dependencies": {
-    "find-up-json": "^2.0.4",
-    "worktank": "^2.6.1"
+    "find-up-json": "^2.0.5",
+    "worktank": "^3.0.0"
   },
   "peerDependencies": {
     "esbuild": "*"
   },
   "devDependencies": {
-    "@types/node": "^20.4.9",
-    "esbuild": "^0.19.0",
-    "tsex": "^3.0.1",
-    "typescript": "^5.1.6"
+    "@types/node": "^18.19.110",
+    "esbuild": "^0.25.5",
+    "tsex": "^4.0.2",
+    "typescript": "^5.8.3"
   }
 }
