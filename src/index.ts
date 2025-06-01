@@ -31,7 +31,7 @@ const getBundle = ( filePath: string, plugins: Plugin[] ): esbuild.BuildResult =
 const getWorkerMethods = ( dist: string ): [dist: string, src: string][] => {
 
   const names = new Map<string, string> ();
-  const lineRe = /(?:^|;)\s*export\s*{\s*([^{}]*?)\s*}/gm;
+  const lineRe = /(?:^|;|})\s*export\s*{\s*([^{}]*?)\s*}/gm;
   const identifierRe = /([a-zA-Z$_][a-zA-Z0-9$_]*)(?:\s+as\s+([a-zA-Z$_][a-zA-Z0-9$_]*))?/gm;
 
   const lines = Array.from ( dist.matchAll ( lineRe ) ).map ( match => match[1] );
@@ -72,13 +72,13 @@ const getWorkerOptions = ( filePath: string, dist: string, source: string, metho
 
 const getWorkerBackendModule = ( dist: string, methods: [string, string][] ): string => {
 
-  const unsupportedRe = /(?:^|;)\s*export\s*(?!\{)/gm;
+  const unsupportedRe = /(?:^|;|})\s*export\s*(?!\{)/gm;
   const unsupported = Array.from ( dist.matchAll ( unsupportedRe ) );
 
   if ( unsupported.length ) throw new Error ( 'WorkTank: unsupported export detected, only simple "export {...}" are supported' );
 
-  const supportedRe = /(?:^|;)\s*export\s*{[^{}]*}/gm;
-  const supported = dist.replace ( supportedRe, '' );
+  const supportedRe = /(^|;|})\s*export\s*{[^{}]*}/gm;
+  const supported = dist.replace ( supportedRe, '$1' );
 
   const registrations = methods.map ( ([ dist, src ]) => `WorkTankWorkerBackend.registerMethods ({ '${dist}': ${src} });` ).join ( '' );
   const ready = 'WorkTankWorkerBackend.ready ();';

@@ -7,6 +7,6 @@
   },
   "dependencies": {
     "mime2ext": "^2.0.1",
-    "worktank": "^3.0.0"
+    "worktank": "^3.0.2"
   }
 }
