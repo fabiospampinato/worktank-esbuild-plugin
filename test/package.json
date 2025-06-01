@@ -6,7 +6,7 @@
     "compile": "node build.js"
   },
   "dependencies": {
-    "mime2ext": "^2.0.0",
-    "worktank": "^2.3.0"
+    "mime2ext": "^2.0.1",
+    "worktank": "^3.0.0"
   }
 }

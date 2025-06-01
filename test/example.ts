@@ -14,6 +14,8 @@ const test = async (): Promise<void> => {
   strictEqual ( os.platform (), await platform () );
   strictEqual ( 'mp3', await mime2ext ( 'audio/mp3' ) );
 
+  console.log ( 'Test passed successfully!' );
+
   pool.terminate ();
 
 };

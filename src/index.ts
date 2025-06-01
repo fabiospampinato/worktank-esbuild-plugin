@@ -5,6 +5,7 @@ import esbuild from 'esbuild';
 import findUpJson from 'find-up-json';
 import fs from 'node:fs';
 import path from 'node:path';
+import merge from 'plain-object-merge';
 import type {Plugin} from 'esbuild';
 import type {Options} from 'worktank';
 
@@ -27,7 +28,7 @@ const getBundle = ( filePath: string, plugins: Plugin[] ): esbuild.BuildResult =
 
 };
 
-const getWorkerMethods = ( dist: string ): [string, string][] => {
+const getWorkerMethods = ( dist: string ): [dist: string, src: string][] => {
 
   const names = new Map<string, string> ();
   const lineRe = /(?:^|;)\s*export\s*{\s*([^{}]*?)\s*}/gm;
@@ -55,11 +56,17 @@ const getWorkerMethods = ( dist: string ): [string, string][] => {
 
 const getWorkerOptions = ( filePath: string, dist: string, source: string, methods: [string, string][] ): Options<{}> => {
 
-  const workerBackendModule = getWorkerBackendModule ( dist, methods );
-  const name = source.match ( /\/\/.*?WORKTANK_NAME.*?=.*?(\S+)/ )?.[1] || path.basename ( filePath );
-  const size = Number ( source.match ( /\/\/.*?WORKTANK_SIZE.*?=.*?(\d+)/ )?.[1] || 1 );
+  const fallbackName = path.basename ( filePath );
+  const fallbackOptions = { pool: { name: fallbackName } };
 
-  return {name, size, methods: workerBackendModule};
+  const workerOptionsRaw = source.match ( /\/\/.*?WORKTANK_OPTIONS.*?=.*?({.*})/i )?.[1] || '{}';
+  const workerOptions = parseOptions ( `(${workerOptionsRaw})` );
+
+  const workerBackendModule = getWorkerBackendModule ( dist, methods );
+  const methodsOptions = { worker: { methods: workerBackendModule } };
+  const options = merge ([ {}, fallbackOptions, workerOptions, methodsOptions ]) as Options<{}>;
+
+  return options;
 
 };
 
@@ -68,25 +75,40 @@ const getWorkerBackendModule = ( dist: string, methods: [string, string][] ): st
   const unsupportedRe = /(?:^|;)\s*export\s*(?!\{)/gm;
   const unsupported = Array.from ( dist.matchAll ( unsupportedRe ) );
 
-  if ( unsupported.length ) throw new Error ( 'WorkTank Loader: unsupported export detected, only simple "export {...}" are supported' );
+  if ( unsupported.length ) throw new Error ( 'WorkTank: unsupported export detected, only simple "export {...}" are supported' );
 
   const supportedRe = /(?:^|;)\s*export\s*{[^{}]*}/gm;
   const supported = dist.replace ( supportedRe, '' );
 
-  const registrations = methods.map ( ([ dist, src ]) => `WorkTankWorkerBackend.register ( '${dist}', ${src} );` ).join ( '' );
+  const registrations = methods.map ( ([ dist, src ]) => `WorkTankWorkerBackend.registerMethods ({ '${dist}': ${src} });` ).join ( '' );
+  const ready = 'WorkTankWorkerBackend.ready ();';
 
-  return `${supported}${registrations}`;
+  return `${supported}\n${registrations}\n${ready}`;
 
 };
 
 const getWorkerFrontendModule = ( options: Options<{}>, methods: [string, string][] ): string => {
 
   return [
-    `import Pool from 'worktank';`, // Importing WorkTank
-    `const pool = new Pool ( ${JSON.stringify ( options )} );`, // Creating a pool
+    `import WorkTank from 'worktank';`, // Importing WorkTank
+    `const pool = new WorkTank ( ${JSON.stringify ( options )} );`, // Creating a pool
     ...methods.map ( ([ dist ]) => `export const ${dist} = function(){return pool.exec('${dist}',Array.prototype.slice.call(arguments))};` ), // Exporting wrapped methods
     `export {pool};` // Exporting pool
   ].join ( '' );
+
+};
+
+const parseOptions = ( options: string ): Options<{}> => {
+
+  try {
+
+    return eval ( options );
+
+  } catch {
+
+    throw new Error ( `WorkTank: failed to parse options: "${options}"` );
+
+  }
 
 };
 
@@ -118,9 +140,9 @@ const transform = async ( filePath: string, plugins: Plugin[] = [] ): Promise<st
 
   const bundle = getBundle ( filePath, plugins );
 
-  if ( !bundle.outputFiles || bundle.outputFiles.length < 1 ) throw new Error ( `WorkTank Loader: unsupported worker file "${filePath}", bundling failed` );
+  if ( !bundle.outputFiles || bundle.outputFiles.length < 1 ) throw new Error ( `WorkTank: unsupported worker file "${filePath}", bundling failed` );
 
-  if ( bundle.outputFiles.length > 1 ) throw new Error ( `WorkTank Loader: unsupported worker file "${filePath}", bundling generated multiple output files` );
+  if ( bundle.outputFiles.length > 1 ) throw new Error ( `WorkTank: unsupported worker file "${filePath}", bundling generated multiple output files` );
 
   const dist = bundle.outputFiles[0].text;
 
